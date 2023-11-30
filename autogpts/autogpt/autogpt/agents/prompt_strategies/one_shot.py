@@ -210,7 +210,7 @@ class OneShotAgentPromptStrategy(PromptStrategy):
                 ChatMessage.system(f"## Progress\n\n{progress}"),
             )
 
-        prompt = ChatPrompt(
+        return ChatPrompt(
             messages=[
                 ChatMessage.system(system_prompt),
                 ChatMessage.user(user_task),
@@ -218,8 +218,6 @@ class OneShotAgentPromptStrategy(PromptStrategy):
                 final_instruction_msg,
             ],
         )
-
-        return prompt
 
     def build_system_prompt(
         self,
@@ -431,14 +429,15 @@ def extract_command(
         Exception: If any other error occurs
     """
     if use_openai_functions_api:
-        if not assistant_reply.get("tool_calls"):
+        if assistant_reply.get("tool_calls"):
+            assistant_reply_json["command"] = {
+                "name": assistant_reply["tool_calls"][0]["function"]["name"],
+                "args": json.loads(
+                    assistant_reply["tool_calls"][0]["function"]["arguments"]
+                ),
+            }
+        else:
             raise InvalidAgentResponseError("No 'tool_calls' in assistant reply")
-        assistant_reply_json["command"] = {
-            "name": assistant_reply["tool_calls"][0]["function"]["name"],
-            "args": json.loads(
-                assistant_reply["tool_calls"][0]["function"]["arguments"]
-            ),
-        }
     try:
         if not isinstance(assistant_reply_json, dict):
             raise InvalidAgentResponseError(
