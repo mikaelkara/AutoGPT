@@ -183,7 +183,7 @@ def execute_python_file(
             )  # type: ignore
             container_is_fresh = True
 
-        if not container.status == "running":
+        if container.status != "running":
             container.start()
         elif not container_is_fresh:
             container.restart()
